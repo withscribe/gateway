@@ -1,0 +1,26 @@
+{
+  "name": "gateway_prototype",
+  "version": "1.0.0",
+  "description": "Prototype of GraphQL Gatewya",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Austin Howlett",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "nodemon": "^1.17.3"
+  },
+  "dependencies": {
+    "apollo-link-http": "^1.5.4",
+    "apollo-server-express": "^1.3.4",
+    "body-parser": "^1.18.2",
+    "eslint": "^4.19.1",
+    "express": "^4.16.3",
+    "graphql": "^0.13.2",
+    "graphql-tools": "^2.24.0",
+    "graphql-yoga": "^1.8.5"
+  }
+}
