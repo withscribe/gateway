@@ -2,6 +2,7 @@
 const express = require('express'),
     app = express(),
     PORT = process.env.PORT || 8081,
+    cors = require('cors'),
     bodyParser = require('body-parser'),
     { graphqlExpress, graphiqlExpress } = require('apollo-server-express'),
     { mergeSchemas } = require('graphql-tools'),
@@ -12,7 +13,7 @@ const authSchema = require('./schema');
 const endpoints = [
     'http://localhost:3000/profile',
     'http://localhost:5000/story',
-    'http://localhost:6000/auth'
+    // 'http://localhost:6000/auth'
 ];
 
 (async function () {
@@ -20,9 +21,11 @@ const endpoints = [
         // promise to grab all remote schemas at the same time, we do not care in what order
         const allSchemas = await Promise.all(endpoints.map(ep => getIntrospectSchema(ep)));
 
+        app.use(cors())
+
         // create function for /unravel endpoint and merge all schemas
         app.use('/unravel', bodyParser.json(), graphqlExpress({ schema: mergeSchemas({ schemas: allSchemas })}));
-        
+
         app.use('/graphiql', graphiqlExpress({
             endpointURL: '/unravel',
         }));
