@@ -5,12 +5,12 @@ const express = require('express'),
     cors = require('cors'),
     bodyParser  = require('body-parser'),
     { graphqlExpress, graphiqlExpress } = require('apollo-server-express'),
-    { mergeSchemas} = require('graphql-tools'),
-    { getIntrospectSchema } = require('./introspection');
+    { mergeSchemas, delegateToSchema } = require('graphql-tools'),
+    { getIntrospectSchema } = require('./introspection')
 
 const linkTypeDefs = require('./linkTypeDefs');
 
-const storyEp = 'http://localhost:4000/story'
+//const storyEp = 'http://localhost:4000/story'
 const profileEp = 'http://localhost:3000/profile';
 const authEp = 'http://localhost:5000/auth';
 
@@ -20,72 +20,124 @@ const authEp = 'http://localhost:5000/auth';
         
         const profileSchema = await getIntrospectSchema(profileEp);
         const authSchema = await getIntrospectSchema(authEp);
-        const storySchema = await getIntrospectSchema(storyEp);
+        //const storySchema = await getIntrospectSchema(storyEp);
 
         app.use(cors())
 
         // create function for /unravel endpoint and merge all schemas
         app.use('/unravel', bodyParser.json(), graphqlExpress({ schema: mergeSchemas({ 
             schemas: [
-                storySchema,
+                //storySchema,
                 profileSchema,
                 authSchema,
                 linkTypeDefs
             ], 
             resolvers: mergeInfo => ({
-                User: {
-                    userProfile: {
-                        fragment: `fragment UserFragment on User { id }`,
+                Account: {
+                    profile: {
+                        fragment: `fragment AccountFragment on Account { id }`,
                         resolve(parent, args, context, info) {
                             return info.mergeInfo.delegate(
                                 'query',
-                                'findProfileByUserId',
+                                'profileByAccountId',
                                 {
-                                    user_id: parent.id
+                                    accountId: parent.id
                                 },
                                 context,
                                 info
-                            );
+
+                            )
                         },
                     },
                 },
                 Profile: {
-                    user: {
+                    account: {
                         fragment: `fragment ProfileFragment on Profile { id }`,
                         resolve(parent, args, context, info) {
                             return info.mergeInfo.delegate(
                                 'query',
-                                'findUserByProfileId',
+                                'accountByProfileId',
                                 {
                                     profileID: parent.id
                                 },
                                 context,
                                 info
-    
+
                             )
                         }
                     },
-                    stories: {
-                        fragment: `fragment ProfileFragment on Profile { id }`,
-                        resolve(parent, args, context, info) {
-                            return info.mergeInfo.delegate(
-                                'query',
-                                'storiesByProfileId',
+                    // stories: {
+                    //     fragment: `fragment ProfileFragment on Profile { id }`,
+                    //     resolve(parent, args, context, info) {
+                    //         return info.mergeInfo.delegate(
+                    //             'query',
+                    //             'storiesByProfileId',
+                    //             {
+                    //                 profileId: parent.id
+                    //             },
+                    //             context,
+                    //             info
+                    //         )
+                    //     }
+
+                    // }
+                },
+                Mutation: {
+                   registerAccountWithProfile: {
+                    fragment: `fragment RegisterFragment on Account { id }`,
+                    resolve: async (parent, args, context, info) => {
+
+                            // register the user
+                            const { account, token, refreshToken } = await info.mergeInfo.delegate(
+                                'mutation',
+                                'register',
                                 {
-                                    profileId: parent.id
+                                    email: args.email,
+                                    password: args.password,
+   
                                 },
                                 context,
                                 info
                             )
-                        }
 
+                            // register the user profile to the newly created account
+                            const profile = await info.mergeInfo.delegate(
+                                'mutation',
+                                'registerProfile',
+                                {
+                                    accountId: account.id,
+                                    userName: args.userName
+                                },
+                                context,
+                                info
+
+                            )
+
+                            // attach the profile to the new user account
+                            info.mergeInfo.delegate(
+                                'mutation',
+                                'setProfileToAccount',
+                                {
+                                    accountId: account.id,
+                                    profileID: profile.id
+                                },
+                                context,
+                                info
+                            )
+
+                        return {
+                            token,
+                            refreshToken,
+                            account
+                        }
                     }
+
+                   },
                 }
             })
         })
     })
 );
-
         app.use('/graphiql', graphiqlExpress({
             endpointURL: '/unravel',
         }));
