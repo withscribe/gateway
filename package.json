@@ -12,19 +12,22 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
-    "nodemon": "^1.18.3"
+    "nodemon": "^1.18.4"
   },
   "dependencies": {
+    "apollo-engine": "^1.1.2",
     "apollo-fetch": "^0.7.0",
     "apollo-link-http": "^1.5.4",
-    "apollo-server-express": "^1.4.0",
+    "apollo-server": "^2.0.6",
+    "apollo-server-express": "^2.0.0-rc.12",
     "body-parser": "^1.18.3",
     "cors": "^2.8.4",
-    "eslint": "^4.19.1",
+    "dotenv": "^6.0.0",
+    "eslint": "^5.5.0",
     "express": "^4.16.3",
     "graphql": "^0.13.2",
-    "graphql-tools": "^2.24.0",
-    "graphql-yoga": "^1.14.12",
+    "graphql-tools": "^3.1.1",
+    "graphql-yoga": "^1.16.2",
     "jsonwebtoken": "^8.3.0"
   }
 }

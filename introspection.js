@@ -1,22 +1,29 @@
-const fetch = require('node-fetch');
+const { createApolloFetch } = require('apollo-fetch');
 const { makeRemoteExecutableSchema, introspectSchema } = require('graphql-tools');
-const { createHttpLink } = require('apollo-link-http');
 
 module.exports = {
     getIntrospectSchema: async (url) => {
-        // Create a link to a GraphQL instance by passing fetch instance and url
-        const makeDataBaseServiceLink = () => createHttpLink({
-            uri: url,
-            fetch
+
+        const serviceFetcher = createApolloFetch({ uri: url });
+        const serviceSchema = await makeRemoteExecutableSchema({
+            schema: await introspectSchema(serviceFetcher),
+            fetcher: serviceFetcher,
         });
 
-        // Fetch our schema
-        const databaseServiceSchemaDefinition = await introspectSchema(makeDataBaseServiceLink());
+        serviceFetcher.use(function setHeaders({ options, request: { context } }, next) {
+            if (context.graphqlContext.authorization == null) {
+                return next();
+            }
 
-        // Make an executable schema
-        return makeRemoteExecutableSchema({
-            schema: databaseServiceSchemaDefinition,
-            link: makeDataBaseServiceLink()
+            if (options.headers == null) {
+                options.headers = {};
+            }
+
+            options.headers.Authorization = `${context.graphqlContext.authorization}`;
+
+            next();
         });
+
+        return serviceSchema;
     }
 }
