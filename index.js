@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express'),
     app = express(),
-    PORT = process.env.PORT || 8081,
+    PORT = process.env.PORT || 8082,
     cors = require('cors'),
     { ApolloServer } = require('apollo-server-express'),
     { ApolloEngine } = require('apollo-engine'),
@@ -99,7 +99,6 @@ const path = '/unravel';
                                 context,
                                 info
                             )
-                            console.log(account)
             
                             // register the user profile to the newly created account
                             const profile = await info.mergeInfo.delegate(
@@ -113,8 +112,6 @@ const path = '/unravel';
                                 info
             
                             )
-            
-                            console.log(profile)
             
                             // attach the profile to the new user account
                             info.mergeInfo.delegate(
@@ -142,7 +139,11 @@ const path = '/unravel';
 
         const server = new ApolloServer({
             schema: mergedSchema,
-            //resolvers: linkResolvers,
+            playground: {
+                settings:{
+                    'editor.cursorShape': 'line'
+                }
+            },
             // tracing: true,
             // cacheControl: true,
             // // We set `engine` to false, so that the new agent is not used.
