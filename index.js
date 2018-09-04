@@ -36,6 +36,11 @@ const path = '/unravel';
 
         const server = new ApolloServer({
             schema: mergedSchema,
+            playground: {
+                settings:{
+                    'editor.cursorShape': 'line'
+                }
+            },
             resolvers: linkResolvers,
             // tracing: true,
             // cacheControl: true,
