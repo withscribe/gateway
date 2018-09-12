@@ -83,56 +83,139 @@ const path = '/unravel';
                     }
                 },
                 Mutation: {
-                   registerAccountWithProfile: {
-                    fragment: `fragment RegisterFragment on Account { id }`,
-                    resolve: async (parent, args, context, info) => {
+                    registerAccountWithProfile: {
+                        fragment: `fragment RegisterFragment on Account { id }`,
+                        resolve: async (parent, args, context, info) => {
             
-                            // register the user
-                            const { account, token, refreshToken } = await info.mergeInfo.delegate(
-                                'mutation',
-                                'register',
+                            const userNameExists = await info.mergeInfo.delegate(
+                                'query',
+                                'userNameExists',
                                 {
-                                    email: args.email,
-                                    password: args.password,
-            
-                                },
-                                context,
-                                info
-                            )
-            
-                            // register the user profile to the newly created account
-                            const profile = await info.mergeInfo.delegate(
-                                'mutation',
-                                'registerProfile',
-                                {
-                                    accountId: account.id,
                                     userName: args.userName
                                 },
                                 context,
                                 info
-            
                             )
+
+                                        
+                            // const accountExists = await info.mergeInfo.delegate(
+                            //     'query',
+                            //     'accountById',
+                            //     {
+                            //         id: args.userId
+                            //     },
+                            //     context,
+                            //     info
+                            // )
+
+                            if(userNameExists) {
+                                throw new Error("Username has already been taken")
+                            } else {
+                                // register the user
+                                const { account, token, refreshToken } =  await info.mergeInfo.delegate(
+                                    'mutation',
+                                    'register',
+                                    {
+                                        email: args.email,
+                                        password: args.password,
+                
+                                    },
+                                    context,
+                                    info
+                                )
+                
+                                // register the user profile to the newly created account
+                                const profile = await  info.mergeInfo.delegate(
+                                    'mutation',
+                                    'registerProfile',
+                                    {
+                                        accountId: account.id,
+                                        userName: args.userName
+                                    },
+                                    context,
+                                    info
+                
+                                )
+                
+                                console.log(profile)
+                
+                                // attach the profile to the new user account
+                                info.mergeInfo.delegate(
+                                    'mutation',
+                                    'setProfileToAccount',
+                                    {
+                                        accountId: account.id,
+                                        profileID: profile.id
+                                    },
+                                    context,
+                                    info
+                                )
             
-                            // attach the profile to the new user account
-                            info.mergeInfo.delegate(
+                                return {
+                                    token,
+                                    refreshToken,
+                                    account
+                                }
+                            }
+            
+                        }
+                   },
+                   updateProfileWithAccount: {
+                    fragment: `fragment UpdateFragment on Profile { id }`,
+                    resolve: async (parent, args, context, info) => {
+                        if(args.email != null) {
+                            const account = await info.mergeInfo.delegate(
                                 'mutation',
-                                'setProfileToAccount',
+                                'updateAccount',
                                 {
-                                    accountId: account.id,
-                                    profileID: profile.id
+                                    accountId: args.accountId,
+                                    email: args.email
+                                },
+                                context,
+                                info
+                            )
+                        }
+                        
+                        const userNameExists = await info.mergeInfo.delegate(
+                            'query',
+                            'userNameExists',
+                            {
+                                userName: args.userName
+                            },
+                            context,
+                            info
+                        )
+
+                        if(userNameExists) {
+                            throw new Error("Username has already been taken")
+                        } else {
+                            const { id, account_id, firstName, lastName, userName, occupation } = await info.mergeInfo.delegate(
+                                'mutation',
+                                'updateProfileCreate',
+                                {
+                                    firstName: args.firstName,
+                                    lastName: args.lastName,
+                                    userName: args.userName,
+                                    dob: args.dob,
+                                    occupation: args.occupation
                                 },
                                 context,
                                 info
                             )
             
-                        return {
-                            token,
-                            refreshToken,
-                            account
+                            return {
+                                id, 
+                                account_id, 
+                                firstName, 
+                                lastName, 
+                                userName, 
+                                occupation
+                            }
+
                         }
+        
                     }
-            
-                   },
+                } 
                 }
             }),
         });
