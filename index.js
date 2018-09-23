@@ -3,8 +3,8 @@ const express = require('express'),
     app = express(),
     PORT = process.env.PORT || 8082,
     cors = require('cors'),
-    { ApolloServer, gql } = require('apollo-server-express'),
-    { ApolloEngine } = require('apollo-engine'),
+    { ApolloServer } = require('apollo-server-express'),
+    { ApolloEngine  } = require('apollo-engine'),
     { mergeSchemas } = require('graphql-tools'),
     { getIntrospectSchema } = require('./introspection'),
     linkResolvers = require('./resolvers/linkResolvers'),
@@ -18,14 +18,14 @@ const path = `/${process.env.GATEWAY_PATH}`;
 
 (async function () {
     try {
-        
+
         const profileSchema = await getIntrospectSchema(profileEp);
         const storySchema = await getIntrospectSchema(storyEp);
         const authSchema = await getIntrospectSchema(authEp);
 
         app.use(cors())
 
-        const mergedSchema = mergeSchemas({ 
+        const mergedSchema = mergeSchemas({
             schemas: [
                 storySchema,
                 profileSchema,
@@ -46,7 +46,7 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 },
                                 context,
                                 info
-            
+
                             })
                         },
                     },
@@ -57,18 +57,18 @@ const path = `/${process.env.GATEWAY_PATH}`;
                         resolve: async (parent, obj, context, info) => {
                             console.log("Profile: parentid: " + parent.id)
                             return await info.mergeInfo.delegateToSchema({
-                                schema: authSchema,    
+                                schema: authSchema,
                                 operation: 'query',
                                 fieldName: 'accountByProfileId',
                                 args: {
                                     profileID: parent.id
                                 },
                                 context,
-                                info  
+                                info
                             })
                         }
                     },
-                    stories: {
+                    profileStories: {
                         fragment: `fragment ProfileFragment on Profile { id }`,
                         resolve: async (parent, obj, context, info) => {
                             return await info.mergeInfo.delegateToSchema({
@@ -82,124 +82,125 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 info
                             })
                         }
-            
+
                     }
                 },
                 Mutation: {
-                    registerAccountWithProfile: {
+                    register: {
                         fragment: `fragment RegisterFragment on Account { id }`,
-                        resolve: async (parent, obj, context, info) => {
-            
-                            // const userNameExists = await info.mergeInfo.delegateToSchema({
-                            //     schema: profileSchema,
-                            //     operation: 'query',
-                            //     fieldName: 'userNameExists',
-                            //     args: {
-                            //         userName: obj.userName
-                            //     },
-                            //     context,
-                            //     info
-                            // })
+                        resolve: async (parents, obj, context, info) => {
 
-                            // if(userNameExists.length != 0) {
-                            //     throw new Error("Username has already been taken")
-                            // } else {
-                                // register the user
-                                const { account, token, refreshToken } =  await info.mergeInfo.delegateToSchema({
-                                    schema: authSchema,
-                                    operation: 'mutation',
-                                    fieldName: 'register',
-                                    args: {
-                                        email: obj.email,
-                                        password: obj.password,
-                
-                                    },
-                                    context,
-                                    info
-                                })
-                
-                                // register the user profile to the newly created account
-                                const profile = await  info.mergeInfo.delegateToSchema({                                    
-                                    schema: profileSchema,
-                                    operation: 'mutation',
-                                    fieldName: 'registerProfile',
-                                    args: {
-                                        accountId: account.id,
-                                        userName: obj.userName
-                                    },
-                                    context,
-                                    info
-                                })
-
-                                console.log(profile.id)
-                
-                                // attach the profile to the new user account
-                                const profileAttached = await info.mergeInfo.delegateToSchema({                                    
-                                    schema: authSchema,
-                                    operation: 'mutation',
-                                    fieldName: 'setProfileToAccount',
-                                    args: {
-                                        accountId: account.id,
-                                        profileID: profile.id
-                                    },
-                                    context,
-                                    info
-                                });
-
-                                console.log(profileAttached)
-                                if (profileAttached != null) {
-
-                                    return {
-                                        token,
-                                        refreshToken,
-                                        account
-                                    }
-                                }
-                            // }
-            
-                        }
-                   },
-                   updateProfileWithAccount: {
-                    fragment: `fragment UpdateFragment on Profile { id }`,
-                    resolve(parent, obj, context, info) {
-
-                        console.log(obj.userName)   
-
-                        if(obj.userName != null) {
-                            const userNameExists = info.mergeInfo.delegateToSchema({
-                                schema: profileSchema,
-                                operation: 'query',
-                                fieldName: 'userNameExists',
+                            const { account, token, refreshToken} = await info.mergeInfo.delegateToSchema({
+                                schema: authSchema,
+                                operation: 'mutation',
+                                fieldName: 'registerAccount',
                                 args: {
+                                    email: obj.email,
+                                    password: obj.password,
+                                },
+                                context,
+                                info
+                            })
+
+                            // register the user profile to the newly created account
+                            const profile = await info.mergeInfo.delegateToSchema({
+                                schema: profileSchema,
+                                operation: 'mutation',
+                                fieldName: 'registerProfile',
+                                args: {
+                                    accountId: account.id,
                                     userName: obj.userName
                                 },
                                 context,
                                 info
                             })
 
-                            console.log("Length: " + userNameExists.length)
-    
-                            if(userNameExists.length != 0) {
-                                throw new Error("Username has already been taken")
-                            } else {
+                            // attach the profile to the new user account
+                            const accountAttached = await info.mergeInfo.delegateToSchema({
+                                schema: authSchema,
+                                operation: 'mutation',
+                                fieldName: 'attachProfileToAccount',
+                                args: {
+                                    accountId: account.id,
+                                    profileID: profile.id
+                                },
+                                context,
+                                info
+                            })
 
-                                if(obj.email != null) {
+                            return {
+                                token,
+                                refreshToken,
+                                account
+                            }
+                        }
+                    },
+                    updateProfileWithAccount: {
+                        fragment: `fragment TestFragment on Profile { id }`,
+                        resolve: async (parent, obj, context, info) => {
+                            if (obj.userName != null) {
+                                const userNameExists = await info.mergeInfo.delegateToSchema({
+                                    schema: profileSchema,
+                                    operation: 'query',
+                                    fieldName: 'userNameExists',
+                                    args: {
+                                        userName: obj.userName
+                                    },
+                                    context,
+                                    info
+                                })
 
-                                    const account = info.mergeInfo.delegateToSchema({
-                                        schema: authSchema,
+                                if (userNameExists.length != 0) {
+                                    throw new Error("Username has already been taken")
+                                } else {
+
+                                    if (obj.email != null) {
+
+                                        const account = await info.mergeInfo.delegateToSchema({
+                                            schema: authSchema,
+                                            operation: 'mutation',
+                                            fieldName: 'updateAccountCreate',
+                                            args: {
+                                                email: obj.email
+                                            },
+                                            context,
+                                            info
+
+                                        })
+                                    }
+
+                                    const profile = await info.mergeInfo.delegateToSchema({
+                                        schema: profileSchema,
                                         operation: 'mutation',
-                                        fieldName: 'updateAccountCreate',
+                                        fieldName: 'updateProfileCreate',
                                         args: {
-                                            email: obj.email
+                                            firstName: obj.firstName,
+                                            lastName: obj.lastName,
+                                            userName: obj.userName,
+                                            dob: obj.dob,
+                                            occupation: obj.occupation
                                         },
                                         context,
                                         info
-
                                     })
-                                    console.log(obj.email +" "+ account)
-                                }
+                                    return profile
 
-                                const profile = info.mergeInfo.delegateToSchema({    
+                                }
+                            } else {
+
+                                const account = await info.mergeInfo.delegateToSchema({
+                                    schema: authSchema,
+                                    operation: 'mutation',
+                                    fieldName: 'updateAccountCreate',
+                                    args: {
+                                        email: obj.email
+                                    },
+                                    context,
+                                    info
+
+                                })
+
+                                const profile = await info.mergeInfo.delegateToSchema({
                                     schema: profileSchema,
                                     operation: 'mutation',
                                     fieldName: 'updateProfileCreate',
@@ -213,50 +214,11 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                     context,
                                     info
                                 })
-                                console.log(profile)
+
                                 return profile
-                                
                             }
-
-
-                        } else {
-                            console.log(obj.email)
-
-                            const account = info.mergeInfo.delegateToSchema({
-                                schema: authSchema,
-                                operation: 'mutation',
-                                fieldName: 'updateAccountCreate',
-                                args: {
-                                    email: obj.email
-                                },
-                                context,
-                                info
-
-                            })
-                            
-                            const profile = info.mergeInfo.delegateToSchema({    
-                                schema: profileSchema,
-                                operation: 'mutation',
-                                fieldName: 'updateProfileCreate',
-                                args: {
-                                    firstName: obj.firstName,
-                                    lastName: obj.lastName,
-                                    userName: obj.userName,
-                                    dob: obj.dob,
-                                    occupation: obj.occupation
-                                },
-                                context,
-                                info
-                            })
-                            
-                            console.log(obj.email +" "+ account)
-                            console.log(profile)
-            
-                            return profile
                         }
-        
                     }
-                },
                 }
             }),
         });
@@ -264,7 +226,7 @@ const path = `/${process.env.GATEWAY_PATH}`;
         const server = new ApolloServer({
             schema: mergedSchema,
             playground: {
-                settings:{
+                settings: {
                     'editor.cursorShape': 'line'
                 }
             },
@@ -272,12 +234,20 @@ const path = `/${process.env.GATEWAY_PATH}`;
             // cacheControl: true,
             // // We set `engine` to false, so that the new agent is not used.
             // engine: false,
-            context: ({req, res}) => {
-                return {authorization: req.headers['authorization']};
+            context: ({
+                req,
+                res
+            }) => {
+                return {
+                    authorization: req.headers['authorization']
+                };
             },
         })
 
-        server.applyMiddleware({ app, path })
+        server.applyMiddleware({
+            app,
+            path
+        })
 
         // **** APOLLO ENGINE NOT CONFIGURED PROPERLY YET ****
 
@@ -300,7 +270,7 @@ const path = `/${process.env.GATEWAY_PATH}`;
 
         // start up /unravel endpoint for the main server/gateway
         app.listen(PORT, () => console.log(`Unravel Gateway listening on port: ${PORT}`));
-          
+
     } catch (error) {
         console.log('ERROR: Failed to grab introspection queries', error);
     }
