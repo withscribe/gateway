@@ -3,7 +3,7 @@ const express = require('express'),
     app = express(),
     PORT = process.env.PORT || 8082,
     cors = require('cors'),
-    { ApolloServer } = require('apollo-server-express'),
+    { ApolloServer, gql } = require('apollo-server-express'),
     { ApolloEngine } = require('apollo-engine'),
     { mergeSchemas } = require('graphql-tools'),
     { getIntrospectSchema } = require('./introspection'),
@@ -11,10 +11,10 @@ const express = require('express'),
     linkTypeDefs = require('./resolvers/linkTypeDefs');
 
 
-const storyEp = 'http://localhost:4000/story'
-const profileEp = 'http://localhost:3000/profile';
-const authEp = 'http://localhost:5000/auth';
-const path = '/unravel';
+const storyEp = `${process.env.STORY_EP}`
+const profileEp = `${process.env.PROFILE_EP}`;
+const authEp = `${process.env.AUTH_EP}`;
+const path = `/${process.env.GATEWAY_PATH}`;
 
 (async function () {
     try {
@@ -36,48 +36,51 @@ const path = '/unravel';
                 Account: {
                     profile: {
                         fragment: `fragment AccountFragment on Account { id }`,
-                        resolve(parent, args, context, info) {
-                            return info.mergeInfo.delegate(
-                                'query',
-                                'profileByAccountId',
-                                {
+                        resolve: async (parent, obj, context, info) => {
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: profileSchema,
+                                operation: 'query',
+                                fieldName: 'profileByAccountId',
+                                args: {
                                     accountId: parent.id
                                 },
                                 context,
                                 info
             
-                            )
+                            })
                         },
                     },
                 },
                 Profile: {
                     account: {
                         fragment: `fragment ProfileFragment on Profile { id }`,
-                        resolve(parent, args, context, info) {
-                            return info.mergeInfo.delegate(
-                                'query',
-                                'accountByProfileId',
-                                {
+                        resolve: async (parent, obj, context, info) => {
+                            console.log("Profile: parentid: " + parent.id)
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: authSchema,    
+                                operation: 'query',
+                                fieldName: 'accountByProfileId',
+                                args: {
                                     profileID: parent.id
                                 },
                                 context,
-                                info
-            
-                            )
+                                info  
+                            })
                         }
                     },
                     stories: {
                         fragment: `fragment ProfileFragment on Profile { id }`,
-                        resolve(parent, args, context, info) {
-                            return info.mergeInfo.delegate(
-                                'query',
-                                'storiesByProfileId',
-                                {
+                        resolve: async (parent, obj, context, info) => {
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: storySchema,
+                                operation: 'query',
+                                fieldName: 'storiesByProfileId',
+                                args: {
                                     profileId: parent.id
                                 },
                                 context,
                                 info
-                            )
+                            })
                         }
             
                     }
@@ -85,137 +88,175 @@ const path = '/unravel';
                 Mutation: {
                     registerAccountWithProfile: {
                         fragment: `fragment RegisterFragment on Account { id }`,
-                        resolve: async (parent, args, context, info) => {
+                        resolve: async (parent, obj, context, info) => {
             
-                            const userNameExists = await info.mergeInfo.delegate(
-                                'query',
-                                'userNameExists',
-                                {
-                                    userName: args.userName
-                                },
-                                context,
-                                info
-                            )
-
-                                        
-                            // const accountExists = await info.mergeInfo.delegate(
-                            //     'query',
-                            //     'accountById',
-                            //     {
-                            //         id: args.userId
+                            // const userNameExists = await info.mergeInfo.delegateToSchema({
+                            //     schema: profileSchema,
+                            //     operation: 'query',
+                            //     fieldName: 'userNameExists',
+                            //     args: {
+                            //         userName: obj.userName
                             //     },
                             //     context,
                             //     info
-                            // )
+                            // })
 
-                            if(userNameExists) {
-                                throw new Error("Username has already been taken")
-                            } else {
+                            // if(userNameExists.length != 0) {
+                            //     throw new Error("Username has already been taken")
+                            // } else {
                                 // register the user
-                                const { account, token, refreshToken } =  await info.mergeInfo.delegate(
-                                    'mutation',
-                                    'register',
-                                    {
-                                        email: args.email,
-                                        password: args.password,
+                                const { account, token, refreshToken } =  await info.mergeInfo.delegateToSchema({
+                                    schema: authSchema,
+                                    operation: 'mutation',
+                                    fieldName: 'register',
+                                    args: {
+                                        email: obj.email,
+                                        password: obj.password,
                 
                                     },
                                     context,
                                     info
-                                )
+                                })
                 
                                 // register the user profile to the newly created account
-                                const profile = await  info.mergeInfo.delegate(
-                                    'mutation',
-                                    'registerProfile',
-                                    {
+                                const profile = await  info.mergeInfo.delegateToSchema({                                    
+                                    schema: profileSchema,
+                                    operation: 'mutation',
+                                    fieldName: 'registerProfile',
+                                    args: {
                                         accountId: account.id,
-                                        userName: args.userName
+                                        userName: obj.userName
                                     },
                                     context,
                                     info
-                
-                                )
-                
-                                console.log(profile)
+                                })
+
+                                console.log(profile.id)
                 
                                 // attach the profile to the new user account
-                                info.mergeInfo.delegate(
-                                    'mutation',
-                                    'setProfileToAccount',
-                                    {
+                                const profileAttached = await info.mergeInfo.delegateToSchema({                                    
+                                    schema: authSchema,
+                                    operation: 'mutation',
+                                    fieldName: 'setProfileToAccount',
+                                    args: {
                                         accountId: account.id,
                                         profileID: profile.id
                                     },
                                     context,
                                     info
-                                )
-            
-                                return {
-                                    token,
-                                    refreshToken,
-                                    account
+                                });
+
+                                console.log(profileAttached)
+                                if (profileAttached != null) {
+
+                                    return {
+                                        token,
+                                        refreshToken,
+                                        account
+                                    }
                                 }
-                            }
+                            // }
             
                         }
                    },
                    updateProfileWithAccount: {
                     fragment: `fragment UpdateFragment on Profile { id }`,
-                    resolve: async (parent, args, context, info) => {
-                        if(args.email != null) {
-                            const account = await info.mergeInfo.delegate(
-                                'mutation',
-                                'updateAccount',
-                                {
-                                    accountId: args.accountId,
-                                    email: args.email
-                                },
-                                context,
-                                info
-                            )
-                        }
-                        
-                        const userNameExists = await info.mergeInfo.delegate(
-                            'query',
-                            'userNameExists',
-                            {
-                                userName: args.userName
-                            },
-                            context,
-                            info
-                        )
+                    resolve(parent, obj, context, info) {
 
-                        if(userNameExists) {
-                            throw new Error("Username has already been taken")
-                        } else {
-                            const { id, account_id, firstName, lastName, userName, occupation } = await info.mergeInfo.delegate(
-                                'mutation',
-                                'updateProfileCreate',
-                                {
-                                    firstName: args.firstName,
-                                    lastName: args.lastName,
-                                    userName: args.userName,
-                                    dob: args.dob,
-                                    occupation: args.occupation
+                        console.log(obj.userName)   
+
+                        if(obj.userName != null) {
+                            const userNameExists = info.mergeInfo.delegateToSchema({
+                                schema: profileSchema,
+                                operation: 'query',
+                                fieldName: 'userNameExists',
+                                args: {
+                                    userName: obj.userName
                                 },
                                 context,
                                 info
-                            )
-            
-                            return {
-                                id, 
-                                account_id, 
-                                firstName, 
-                                lastName, 
-                                userName, 
-                                occupation
+                            })
+
+                            console.log("Length: " + userNameExists.length)
+    
+                            if(userNameExists.length != 0) {
+                                throw new Error("Username has already been taken")
+                            } else {
+
+                                if(obj.email != null) {
+
+                                    const account = info.mergeInfo.delegateToSchema({
+                                        schema: authSchema,
+                                        operation: 'mutation',
+                                        fieldName: 'updateAccountCreate',
+                                        args: {
+                                            email: obj.email
+                                        },
+                                        context,
+                                        info
+
+                                    })
+                                    console.log(obj.email +" "+ account)
+                                }
+
+                                const profile = info.mergeInfo.delegateToSchema({    
+                                    schema: profileSchema,
+                                    operation: 'mutation',
+                                    fieldName: 'updateProfileCreate',
+                                    args: {
+                                        firstName: obj.firstName,
+                                        lastName: obj.lastName,
+                                        userName: obj.userName,
+                                        dob: obj.dob,
+                                        occupation: obj.occupation
+                                    },
+                                    context,
+                                    info
+                                })
+                                console.log(profile)
+                                return profile
+                                
                             }
 
+
+                        } else {
+                            console.log(obj.email)
+
+                            const account = info.mergeInfo.delegateToSchema({
+                                schema: authSchema,
+                                operation: 'mutation',
+                                fieldName: 'updateAccountCreate',
+                                args: {
+                                    email: obj.email
+                                },
+                                context,
+                                info
+
+                            })
+                            
+                            const profile = info.mergeInfo.delegateToSchema({    
+                                schema: profileSchema,
+                                operation: 'mutation',
+                                fieldName: 'updateProfileCreate',
+                                args: {
+                                    firstName: obj.firstName,
+                                    lastName: obj.lastName,
+                                    userName: obj.userName,
+                                    dob: obj.dob,
+                                    occupation: obj.occupation
+                                },
+                                context,
+                                info
+                            })
+                            
+                            console.log(obj.email +" "+ account)
+                            console.log(profile)
+            
+                            return profile
                         }
         
                     }
-                } 
+                },
                 }
             }),
         });
