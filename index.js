@@ -7,7 +7,6 @@ const express = require('express'),
     { ApolloEngine  } = require('apollo-engine'),
     { mergeSchemas } = require('graphql-tools'),
     { getIntrospectSchema } = require('./introspection'),
-    linkResolvers = require('./resolvers/linkResolvers'),
     linkTypeDefs = require('./resolvers/linkTypeDefs');
 
 
