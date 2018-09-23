@@ -5,12 +5,11 @@ module.exports = `
 
     extend type Profile {
         account: Account
+        profileStories: [Story!]!
     }
 
     extend type Mutation {
-        registerAccountWithProfile(email: String!, password: String!, userName: String!): AuthPayload
-        updateProfileWithAccount(accountId: ID!, email: String, userName: String, firstName: String, lastName: String, dob: String, occupation: String): Profile
-
+        updateProfileWithAccount(email: String, userName: String, firstName: String, lastName: String, dob: String, occupation: String): Profile
+        register(email: String!, password: String!, userName: String!): AuthPayload
     }
 `;
-
