@@ -19,6 +19,9 @@ pipelines:
         script:
           - echo "Deploying to production environment"
           - npm install
-          - npm restart
+          - export $PROFILE_EP
+          - export $AUTH_EP
+          - export $STORY_EP
+          - pm2 start index.js
           - echo "Deployment complete"
 
