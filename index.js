@@ -127,8 +127,12 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                     context,
                                     info
                                 })
+                                console.log(account)
+                                console.log(profile)
 
                                 // attach the profile to the new user account
+                                // THIS IS STILL BROKEN ----
+                                // NOTE: PROTECT ROUTE AND PASS TOKEN IN CONTEXT TO AUTHORIZE
                                 const accountAttached = await info.mergeInfo.delegateToSchema({
                                     schema: authSchema,
                                     operation: 'mutation',
@@ -182,7 +186,77 @@ const path = `/${process.env.GATEWAY_PATH}`;
                             })
                             return profile
                         }
-                    }  
+                    },
+                    like: {
+                        fragment: `fragment LikeStoryFragment on Story { id }`,
+                        resolve: async (parent, obj, context, info) => {
+                            const story = await info.mergeInfo.delegateToSchema({
+                                schema: storySchema,
+                                operation: 'mutation',
+                                fieldName: 'addLikeToStory',
+                                args: {
+                                    storyId: obj.storyId
+                                },
+                                context,
+                                info
+                            })
+
+                            const profile = await info.mergeInfo.delegateToSchema({
+                                schema: profileSchema,
+                                operation: 'mutation',
+                                fieldName: 'addLikedStory',
+                                args: {
+                                    storyId: obj.storyId
+                                },
+                                context,
+                                info
+                            })
+                            
+                            if(story != null) {
+                                console.log(story)
+                            }
+                            if(profile != null) {
+                                console.log(profile)
+                            }
+
+                            return story
+                        }
+                    },
+                    removeLike: {
+                        fragment: `fragment RemoveLikeFragment on Story { id }`,
+                        resolve: async (parent, obj, context, info) => {
+                            const story = await info.mergeInfo.delegateToSchema({
+                                schema: storySchema,
+                                operation: 'mutation',
+                                fieldName: 'removeLikeFromStory',
+                                args: {
+                                    storyId: obj.storyId
+                                },
+                                context,
+                                info
+                            })
+
+                            const profile = info.mergeInfo.delegateToSchema({
+                                schema: profileSchema,
+                                operation: 'mutation',
+                                fieldName: 'removeLikedStory',
+                                args: {
+                                    storyId: obj.storyId
+                                },
+                                context,
+                                info
+                            })
+                            
+                            if(story != null) {
+                                console.log(story)
+                            }
+                            if(profile != null) {
+                                console.log(profile)
+                            }
+
+                            return story
+                        }
+                    } 
                 }
             }),
         });

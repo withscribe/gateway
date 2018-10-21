@@ -11,5 +11,7 @@ module.exports = `
     extend type Mutation {
         updateProfileWithAccount(email: String, userName: String, firstName: String, lastName: String, dob: String, occupation: String): Profile
         register(email: String!, password: String!, userName: String!): AuthPayload
+        like(storyId: ID): Story
+        removeLike(storyId: ID): Story
     }
 `;

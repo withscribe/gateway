@@ -4,8 +4,9 @@
   "description": "Prototype of GraphQL Gatewya",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --exec babel-node index.js"
+    "test": "nodemon --exec babel-node index.js",
+    "start": "pm2 start index.js",
+    "restart": "pm2 restart all"
   },
   "author": "Austin Howlett",
   "license": "ISC",
