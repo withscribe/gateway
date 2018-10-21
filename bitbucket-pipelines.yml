@@ -23,6 +23,6 @@ pipelines:
           - export AUTH_EP=$AUTH_EP
           - export STORY_EP=$STORY_EP
           - export GATEWAY_PATH=$GATEWAY_PATH
-          - pm2 start index.js
+          - npm test
           - echo "Deployment complete"
 
