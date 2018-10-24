@@ -67,15 +67,31 @@ const path = `/${process.env.GATEWAY_PATH}`;
                             })
                         }
                     },
-                    profileStories: {
+                    originalStories: {
                         fragment: `fragment ProfileFragment on Profile { id }`,
                         resolve: async (parent, obj, context, info) => {
                             return await info.mergeInfo.delegateToSchema({
                                 schema: storySchema,
                                 operation: 'query',
-                                fieldName: 'storiesByProfileId',
+                                fieldName: 'storiesByAuthorId',
                                 args: {
-                                    profileId: parent.id
+                                    authorId: parent.id
+                                },
+                                context,
+                                info
+                            })
+                        }
+
+                    },
+                    nonOriginalStories: {
+                        fragment: `fragment ProfileFragment on Profile { id }`,
+                        resolve: async (parent, obj, context, info) => {
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: storySchema,
+                                operation: 'query',
+                                fieldName: 'storiesByNonAuthorId',
+                                args: {
+                                    nonAuthorId: parent.id
                                 },
                                 context,
                                 info

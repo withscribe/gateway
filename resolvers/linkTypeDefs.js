@@ -5,7 +5,8 @@ module.exports = `
 
     extend type Profile {
         account: Account
-        profileStories: [Story!]!
+        originalStories: [Story!]!
+        nonOriginalStories: [Story!]!
     }
 
     extend type Mutation {
