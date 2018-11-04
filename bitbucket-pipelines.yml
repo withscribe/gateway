@@ -8,25 +8,29 @@ image: node:latest
 pipelines:
   default:
     - step:
+        name: Starting Deployment Pipeline
         caches:
           - node
         script: # Modify the commands below to build your repository.
           - echo "Starting deployment pipeline..."
+          - echo "Deployment pipeline started."
     - step:
-        name: Deploy to test
-        deployment: staging   # can be test, staging or production.
+        name: Deploy to Production
+        deployment: production   # can be test, staging or production.
         # trigger: manual  # Uncomment to make this a manual deployment.
         script:
-          - echo "Deploying to staging..."
+          - echo "Connecting to production server..."
           - ssh -tt root@138.197.130.167 << EOF
+          - echo "Connected to production server."
           - cd unravel-api-gateway
+          - echo "Updating application..."
           - git pull
           - npm install
-          - echo "Deploy to staging successful."
-          - echo "Launching staging server..."
+          - echo "Application updated."
+          - echo "Launching production server..."
           - pm2 restart index.js
           - exit $?
           - EOF
-          - echo "Staging server started successfully."
-          - echo "Staging environment deployed successfully!"
+          - echo "Production server started successfully."
+          - echo "Production environment deployed successfully!"
 
