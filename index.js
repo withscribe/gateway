@@ -176,8 +176,6 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                     context,
                                     info
                                 })
-                                console.log(account)
-                                console.log(profile)
 
                                 // attach the profile to the new user account
                                 // THIS IS STILL BROKEN ----
