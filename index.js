@@ -81,7 +81,6 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 info
                             })
                         }
-
                     },
                     nonOriginalStories: {
                         fragment: `fragment ProfileFragment on Profile { id }`,
@@ -97,8 +96,42 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 info
                             })
                         }
-
                     }
+                },
+                Story: {
+                    authorProfile: {
+                        fragment: `fragment AuthorFragment on Story { authorId }`,
+                        resolve: async (parent, obj, context, info) => {
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: profileSchema,
+                                operation: 'query',
+                                fieldName: 'profileById',
+                                args: {
+                                    id: parent.authorId
+                                },
+                                context,
+                                info
+                            })
+                        }
+                    },
+                    nonAuthorProfile: {
+                        fragment: `fragment NonAuthorFragment on Story { nonAuthorId }`,
+                        resolve: async (parent, obj, context, info) => {
+                            if (parent.nonAuthorId) {
+                                return await info.mergeInfo.delegateToSchema({
+                                    schema: profileSchema,
+                                    operation: 'query',
+                                    fieldName: 'profileById',
+                                    args: {
+                                        id: parent.nonAuthorId
+                                    },
+                                    context,
+                                    info
+                                })
+                            }
+                            return {}
+                        }
+                    },
                 },
                 Mutation: {
                     register: {
@@ -206,16 +239,6 @@ const path = `/${process.env.GATEWAY_PATH}`;
                     like: {
                         fragment: `fragment LikeStoryFragment on Story { id }`,
                         resolve: async (parent, obj, context, info) => {
-                            const story = await info.mergeInfo.delegateToSchema({
-                                schema: storySchema,
-                                operation: 'mutation',
-                                fieldName: 'addLikeToStory',
-                                args: {
-                                    storyId: obj.storyId
-                                },
-                                context,
-                                info
-                            })
 
                             const profile = await info.mergeInfo.delegateToSchema({
                                 schema: profileSchema,
@@ -223,6 +246,19 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 fieldName: 'addLikedStory',
                                 args: {
                                     storyId: obj.storyId
+                                },
+                                context,
+                                info
+                            })
+                            console.log(profile)
+
+                            const story = await info.mergeInfo.delegateToSchema({
+                                schema: storySchema,
+                                operation: 'mutation',
+                                fieldName: 'addLikeToStory',
+                                args: {
+                                    storyId: obj.storyId,
+                                    profileId: profile.id
                                 },
                                 context,
                                 info

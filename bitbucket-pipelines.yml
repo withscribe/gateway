@@ -3,7 +3,7 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: node:6.9.4
+image: node:latest
 
 pipelines:
   default:
@@ -11,18 +11,22 @@ pipelines:
         caches:
           - node
         script: # Modify the commands below to build your repository.
-          - echo "Testing....."
+          - echo "Starting deployment pipeline..."
     - step:
         name: Deploy to test
-        deployment: production   # can be test, staging or production.
+        deployment: staging   # can be test, staging or production.
         # trigger: manual  # Uncomment to make this a manual deployment.
         script:
-          - echo "Deploying to production environment"
+          - echo "Deploying to staging..."
+          - ssh -tt root@138.197.130.167 << EOF
+          - cd unravel-api-gateway
+          - git pull
           - npm install
-          - export PROFILE_EP=$PROFILE_EP
-          - export AUTH_EP=$AUTH_EP
-          - export STORY_EP=$STORY_EP
-          - export GATEWAY_PATH=$GATEWAY_PATH
-          - npm test
-          - echo "Deployment complete"
+          - echo "Deploy to staging successful."
+          - echo "Launching staging server..."
+          - pm2 restart index.js
+          - exit $?
+          - EOF
+          - echo "Staging server started successfully."
+          - echo "Staging environment deployed successfully!"
 

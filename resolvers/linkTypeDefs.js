@@ -9,6 +9,11 @@ module.exports = `
         nonOriginalStories: [Story!]!
     }
 
+    extend type Story {
+        authorProfile: Profile
+        nonAuthorProfile: Profile 
+    }
+
     extend type Mutation {
         updateProfileWithAccount(email: String, userName: String, firstName: String, lastName: String, dob: String, occupation: String): Profile
         register(email: String!, password: String!, userName: String!): AuthPayload
