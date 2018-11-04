@@ -1,3 +1,4 @@
 # ignore node_modules folder and sub folders/files
 node_modules/*
 .env
+.idea
