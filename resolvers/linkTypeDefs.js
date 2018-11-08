@@ -7,11 +7,18 @@ module.exports = `
         account: Account
         originalStories: [Story!]!
         nonOriginalStories: [Story!]!
+        communities: [Community!]!
     }
 
     extend type Story {
         authorProfile: Profile
         nonAuthorProfile: Profile 
+    }
+    
+    extend type Community {
+        stories: [Story!]!
+        members: [Profile!]!
+        bannedMembers: [Profile!]!
     }
 
     extend type Mutation {
@@ -19,5 +26,6 @@ module.exports = `
         register(email: String!, password: String!, userName: String!): AuthPayload
         like(storyId: ID): Story
         removeLike(storyId: ID): Story
+        addMemberToCommunity(profileId: ID!, communityId: ID!): Community
     }
 `;

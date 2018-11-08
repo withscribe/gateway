@@ -13,6 +13,7 @@ const express = require('express'),
 const storyEp = `${process.env.STORY_EP}`
 const profileEp = `${process.env.PROFILE_EP}`;
 const authEp = `${process.env.AUTH_EP}`;
+const communityEp = `${process.env.COMMUNITY_EP}`;
 const path = `/${process.env.GATEWAY_PATH}`;
 
 (async function () {
@@ -21,6 +22,7 @@ const path = `/${process.env.GATEWAY_PATH}`;
         const profileSchema = await getIntrospectSchema(profileEp);
         const storySchema = await getIntrospectSchema(storyEp);
         const authSchema = await getIntrospectSchema(authEp);
+        const communitySchema = await getIntrospectSchema(communityEp);
 
         app.use(cors())
 
@@ -29,6 +31,7 @@ const path = `/${process.env.GATEWAY_PATH}`;
                 storySchema,
                 profileSchema,
                 authSchema,
+                communitySchema,
                 linkTypeDefs
             ],
             resolvers: ({
@@ -45,7 +48,6 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 },
                                 context,
                                 info
-
                             })
                         },
                     },
@@ -54,13 +56,12 @@ const path = `/${process.env.GATEWAY_PATH}`;
                     account: {
                         fragment: `fragment ProfileFragment on Profile { id }`,
                         resolve: async (parent, obj, context, info) => {
-                            console.log("Profile: parentid: " + parent.id)
                             return await info.mergeInfo.delegateToSchema({
                                 schema: authSchema,
                                 operation: 'query',
                                 fieldName: 'accountByProfileId',
                                 args: {
-                                    profileID: parent.id
+                                    profileId: parent.id
                                 },
                                 context,
                                 info
@@ -91,6 +92,21 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 fieldName: 'storiesByNonAuthorId',
                                 args: {
                                     nonAuthorId: parent.id
+                                },
+                                context,
+                                info
+                            })
+                        }
+                    },
+                    communities: {
+                        fragment: `fragment ProfileFragment on Profile { communitiesIds }`,
+                        resolve: async (parent, obj, context, info) => {
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: communitySchema,
+                                operation: 'query',
+                                fieldName: 'membersCommunities',
+                                args: {
+                                    communitiesIds: parent.communitiesIds
                                 },
                                 context,
                                 info
@@ -130,6 +146,53 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 })
                             }
                             return {}
+                        }
+                    },
+                },
+                Community: {
+                    stories: {
+                        fragment: `fragment CommunityStories on Community { id }`,
+                        resolve: async (parent, obj, context, info) => {
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: storySchema,
+                                operation: 'query',
+                                fieldName: 'storiesByCommunityId',
+                                args: {
+                                    communityId: parent.id
+                                },
+                                context,
+                                info
+                            })
+                        }
+                    },
+                    members: {
+                        fragment: `fragment CommunityMembers on Community { membersIds }`,
+                        resolve: async (parent, obj, context, info) => {
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: profileSchema,
+                                operation: 'query',
+                                fieldName: 'communitiesMembers',
+                                args: {
+                                    membersIds: parent.membersIds
+                                },
+                                context,
+                                info
+                            })
+                        }
+                    },
+                    bannedMembers: {
+                        fragment: `fragment CommunityBannedMembers on Community { bannedMembersIds }`,
+                        resolve: async (parent, obj, context, info) => {
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: profileSchema,
+                                operation: 'query',
+                                fieldName: 'communitiesMembers',
+                                args: {
+                                    membersIds: parent.bannedMembersIds
+                                },
+                                context,
+                                info
+                            })
                         }
                     },
                 },
@@ -186,7 +249,7 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                     fieldName: 'attachProfileToAccount',
                                     args: {
                                         accountId: account.id,
-                                        profileID: profile.id
+                                        profileId: profile.id
                                     },
                                     context,
                                     info
@@ -248,7 +311,6 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 context,
                                 info
                             })
-                            console.log(profile)
 
                             const story = await info.mergeInfo.delegateToSchema({
                                 schema: storySchema,
@@ -261,14 +323,6 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 context,
                                 info
                             })
-                            
-                            if(story != null) {
-                                console.log(story)
-                            }
-                            if(profile != null) {
-                                console.log(profile)
-                            }
-
                             return story
                         }
                     },
@@ -295,18 +349,38 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 },
                                 context,
                                 info
-                            })
-                            
-                            if(story != null) {
-                                console.log(story)
-                            }
-                            if(profile != null) {
-                                console.log(profile)
-                            }
-
+                            })                       
                             return story
                         }
-                    } 
+                    },
+                    addMemberToCommunity: {
+                        fragment: `fragment CommunityAddMember on Community { id }`,
+                        resolve: async (parent, obj, context, info) => {
+                            const profile = await info.mergeInfo.delegateToSchema({
+                                schema: profileSchema,
+                                operation: 'mutation',
+                                fieldName: 'setCommunityToProfile',
+                                args: {
+                                    id: obj.profileId,
+                                    communityId: obj.communityId
+                                },
+                                context,
+                                info
+                            })
+
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: communitySchema,
+                                operation: 'mutation',
+                                fieldName: 'setMemberToCommunity',
+                                args: {
+                                    id: obj.communityId,
+                                    profileId: obj.profileId
+                                },
+                                context,
+                                info
+                            })
+                        }
+                    },
                 }
             }),
         });
@@ -322,20 +396,14 @@ const path = `/${process.env.GATEWAY_PATH}`;
             // cacheControl: true,
             // // We set `engine` to false, so that the new agent is not used.
             // engine: false,
-            context: ({
-                req,
-                res
-            }) => {
+            context: ({ req, res }) => {
                 return {
                     authorization: req.headers['authorization']
                 };
             },
         })
 
-        server.applyMiddleware({
-            app,
-            path
-        })
+        server.applyMiddleware({ app, path })
 
         // **** APOLLO ENGINE NOT CONFIGURED PROPERLY YET ****
 
@@ -357,7 +425,7 @@ const path = `/${process.env.GATEWAY_PATH}`;
         // **** APOLLO ENGINE END ****
 
         // start up /unravel endpoint for the main server/gateway
-        app.listen(PORT, () => console.log(`Unravel Gateway listening on port: ${PORT}`));
+        app.listen(PORT, () => console.log(`Gateway listening on port: ${PORT}`));
 
     } catch (error) {
         console.log('ERROR: Failed to grab introspection queries', error);
