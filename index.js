@@ -347,7 +347,7 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 fieldName: 'removeLikeFromStory',
                                 args: {
                                     storyId: obj.storyId,
-                                    profileId: profile.id
+                                    profileId: objprofileId
                                 },
                                 context,
                                 info

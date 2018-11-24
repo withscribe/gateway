@@ -12,9 +12,9 @@ module.exports = `
 
     extend type Story {
         authorProfile: Profile
-        nonAuthorProfile: Profile 
+        nonAuthorProfile: Profile
     }
-    
+
     extend type Community {
         stories: [Story!]!
         members: [Profile!]!
@@ -25,7 +25,7 @@ module.exports = `
         updateProfileWithAccount(email: String, userName: String, firstName: String, lastName: String, dob: String, occupation: String): Profile
         register(email: String!, password: String!, userName: String!): AuthPayload
         like(storyId: ID): Story
-        removeLike(storyId: ID): Story
+        removeLike(storyId: ID, profileId: ID,): Story
         addMemberToCommunity(profileId: ID!, communityId: ID!): Community
     }
 `;
