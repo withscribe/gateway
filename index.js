@@ -327,18 +327,8 @@ const path = `/${process.env.GATEWAY_PATH}`;
                         }
                     },
                     removeLike: {
-                        fragment: `fragment RemoveLikeFragment on Story { id }`,
+                        fragment: `fragment RemoveLikeFragment on Story { id, likes }`,
                         resolve: async (parent, obj, context, info) => {
-                            const story = await info.mergeInfo.delegateToSchema({
-                                schema: storySchema,
-                                operation: 'mutation',
-                                fieldName: 'removeLikeFromStory',
-                                args: {
-                                    storyId: obj.storyId
-                                },
-                                context,
-                                info
-                            })
 
                             const profile = info.mergeInfo.delegateToSchema({
                                 schema: profileSchema,
@@ -349,7 +339,20 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 },
                                 context,
                                 info
-                            })                       
+                            })
+
+                            const story = await info.mergeInfo.delegateToSchema({
+                                schema: storySchema,
+                                operation: 'mutation',
+                                fieldName: 'removeLikeFromStory',
+                                args: {
+                                    storyId: obj.storyId,
+                                    profileId: profile.id
+                                },
+                                context,
+                                info
+                            })
+
                             return story
                         }
                     },
