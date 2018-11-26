@@ -356,7 +356,7 @@ const path = `/${process.env.GATEWAY_PATH}`;
                             return story
                         }
                     },
-                    addMemberToCommunity: {
+                    addMember: {
                         fragment: `fragment CommunityAddMember on Community { id }`,
                         resolve: async (parent, obj, context, info) => {
                             const profile = await info.mergeInfo.delegateToSchema({
@@ -375,6 +375,34 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 schema: communitySchema,
                                 operation: 'mutation',
                                 fieldName: 'setMemberToCommunity',
+                                args: {
+                                    id: obj.communityId,
+                                    profileId: obj.profileId
+                                },
+                                context,
+                                info
+                            })
+                        }
+                    },
+                    removeMember: {
+                        fragment: `fragment CommunityAddMember on Community { id }`,
+                        resolve: async (parent, obj, context, info) => {
+                            const profile = await info.mergeInfo.delegateToSchema({
+                                schema: profileSchema,
+                                operation: 'mutation',
+                                fieldName: 'removeCommunityFromProfile',
+                                args: {
+                                    id: obj.profileId,
+                                    communityId: obj.communityId
+                                },
+                                context,
+                                info
+                            })
+
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: communitySchema,
+                                operation: 'mutation',
+                                fieldName: 'removeMemberFromCommunity',
                                 args: {
                                     id: obj.communityId,
                                     profileId: obj.profileId

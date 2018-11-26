@@ -24,7 +24,7 @@ pipelines:
           - echo "Connected to production server."
           - cd unravel-api-gateway
           - echo "Updating application..."
-          - git pull
+          - git pull origin master
           - npm install
           - echo "Application updated."
           - echo "Launching production server..."

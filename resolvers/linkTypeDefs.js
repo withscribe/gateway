@@ -26,6 +26,7 @@ module.exports = `
         register(email: String!, password: String!, userName: String!): AuthPayload
         like(storyId: ID): Story
         removeLike(storyId: ID, profileId: ID,): Story
-        addMemberToCommunity(profileId: ID!, communityId: ID!): Community
+        addMember(profileId: ID!, communityId: ID!): Community
+        removeMember(profileId: ID!, communityId: ID!): Community
     }
 `;
