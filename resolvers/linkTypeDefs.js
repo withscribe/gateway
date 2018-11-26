@@ -28,5 +28,8 @@ module.exports = `
         removeLike(storyId: ID, profileId: ID,): Story
         addMember(profileId: ID!, communityId: ID!): Community
         removeMember(profileId: ID!, communityId: ID!): Community
+        addStoryToCommunity(storyId: ID!, communityId: ID!): Community
+        removeStoryFromCommunity(storyId: ID!, communityId: ID!): Community
+        submitStory(title: String!, description: String!, author: String!, content: String!, authorId: ID, communityId: ID): Story
     }
 `;

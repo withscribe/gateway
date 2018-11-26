@@ -398,7 +398,7 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 context,
                                 info
                             })
-
+                            console.log(profile)
                             return await info.mergeInfo.delegateToSchema({
                                 schema: communitySchema,
                                 operation: 'mutation',
@@ -410,6 +410,113 @@ const path = `/${process.env.GATEWAY_PATH}`;
                                 context,
                                 info
                             })
+                        }
+                    },
+                    addStoryToCommunity: {
+                        fragment: `fragment CommunityAddStory on Community { id }`,
+                        resolve: async (parent, obj, context, info) => {
+                            const profile = await info.mergeInfo.delegateToSchema({
+                                schema: storySchema,
+                                operation: 'mutation',
+                                fieldName: 'addCommunityId',
+                                args: {
+                                    storyId: obj.storyId,
+                                    communityId: obj.communityId
+                                },
+                                context,
+                                info
+                            })
+
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: communitySchema,
+                                operation: 'mutation',
+                                fieldName: 'setStoryToCommunity',
+                                args: {
+                                    id: obj.communityId,
+                                    storyId: obj.storyId
+                                },
+                                context,
+                                info
+                            })
+                        }
+                    },
+                    removeStoryFromCommunity: {
+                        fragment: `fragment CommunityRemoveStory on Community { id }`,
+                        resolve: async (parent, obj, context, info) => {
+                            const profile = await info.mergeInfo.delegateToSchema({
+                                schema: storySchema,
+                                operation: 'mutation',
+                                fieldName: 'removeCommunityId',
+                                args: {
+                                    storyId: obj.storyId,
+                                },
+                                context,
+                                info
+                            })
+
+                            return await info.mergeInfo.delegateToSchema({
+                                schema: communitySchema,
+                                operation: 'mutation',
+                                fieldName: 'deleteStoryFromCommunity',
+                                args: {
+                                    id: obj.communityId,
+                                    storyId: obj.storyId
+                                },
+                                context,
+                                info
+                            })
+                        }
+                    },
+                    submitStory: {
+                        fragment: `fragment SubmitStory on Story { id }`,
+                        resolve: async (parent, obj, context, info) => {
+                            if(obj.communityId == null) {
+                                return await info.mergeInfo.delegateToSchema({
+                                    schema: storySchema,
+                                    operation: 'mutation',
+                                    fieldName: 'createStory',
+                                    args: {
+                                        title: obj.title,
+                                        description: obj.description,
+                                        author: obj.author,
+                                        content: obj.content,
+                                        authorId: obj.authorId,
+                                    },
+                                    context,
+                                    info
+                                })
+                            } else {
+                                const story = await info.mergeInfo.delegateToSchema({
+                                    schema: storySchema,
+                                    operation: 'mutation',
+                                    fieldName: 'createStory',
+                                    args: {
+                                        title: obj.title,
+                                        description: obj.description,
+                                        author: obj.author,
+                                        content: obj.content,
+                                        authorId: obj.authorId,
+                                        communityId: obj.communityId,
+                                    },
+                                    context,
+                                    info
+                                })
+
+
+                                const community = await info.mergeInfo.delegateToSchema({
+                                    schema: communitySchema,
+                                    operation: 'mutation',
+                                    fieldName: 'setStoryToCommunity',
+                                    args: {
+                                        id: obj.communityId,
+                                        storyId: story.id
+                                    },
+                                    context,
+                                    info
+                                })
+
+                                return story
+                            }
                         }
                     },
                 }
