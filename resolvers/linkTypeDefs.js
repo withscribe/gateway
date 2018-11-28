@@ -1,3 +1,7 @@
+// Author: Austin Howlett
+// Description: Responsible for extending the remote schemas, this allows for building relations
+// between remote schema types and also allows for queries/mutations to be delegated to multiple remote schemas
+
 module.exports = `
     extend type Account {
         profile: Profile

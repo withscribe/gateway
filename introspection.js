@@ -1,3 +1,7 @@
+// Author: Austin Howlett
+// Description: Responsible for introspecting the remote schemas and forwarding request headers
+// to the remote schemas
+
 const { createApolloFetch } = require('apollo-fetch');
 const { makeRemoteExecutableSchema, introspectSchema } = require('graphql-tools');
 

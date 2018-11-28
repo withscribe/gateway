@@ -1,3 +1,7 @@
+// Author: Austin Howlett
+// Description: Responsible for starting the GraphQLServer(ApolloServer), setting the pathing and port
+// also responsible for resolving the extended schema definitions
+
 require('dotenv').config();
 const express = require('express'),
     app = express(),
