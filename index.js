@@ -474,7 +474,7 @@ const path = `/${process.env.GATEWAY_PATH}`;
                     submitStory: {
                         fragment: `fragment SubmitStory on Story { id }`,
                         resolve: async (parent, obj, context, info) => {
-                            if(obj.communityId == null) {
+                            if(obj.communityId == null || obj.communityId == undefined) {
                                 return await info.mergeInfo.delegateToSchema({
                                     schema: storySchema,
                                     operation: 'mutation',
